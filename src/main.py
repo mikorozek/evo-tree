@@ -13,58 +13,58 @@ class DecisionTree:
         return f"Attributes: {self.attributes}\nThresholds: {self.thresholds}\nFitness: {self.fitness:.4f}"
 
 class Population:
-    def __init__(self, population_size: int, attributes: List[int], 
-                 possible_thresholds: Dict[int, List[float]], max_depth: int, num_classes: int):
+    def __init__(self, X: np.ndarray, y: np.ndarray, population_size: int, 
+                 attributes: List[int], possible_thresholds: Dict[int, List[float]], 
+                 max_depth: int):
+        self.X = X
+        self.y = y
         self.individuals = [
-            self._create_random_tree(attributes, possible_thresholds, max_depth, num_classes)
+            self._create_random_tree(X, y, attributes, possible_thresholds, max_depth)
             for _ in range(population_size)
         ]
         self.generation = 0
     
     @staticmethod
-    def _create_random_tree(attributes: List[int], possible_thresholds: Dict[int, List[float]], 
-                            max_depth: int, num_classes: int, p_split: float = 0.7) -> DecisionTree:
-        """
-        Generuje losowe drzewo decyzyjne.
-
-        :param attributes: Lista dostępnych atrybutów.
-        :param possible_thresholds: Słownik możliwych progów dla każdego atrybutu.
-        :param max_depth: Maksymalna głębokość drzewa.
-        :param num_classes: Liczba klas (etykiet).
-        :param p_split: Prawdopodobieństwo podziału węzła.
-        :return: Losowe drzewo decyzyjne.
-        """
+    def _create_random_tree(X: np.ndarray, y: np.ndarray, attributes: List[int], 
+                            possible_thresholds: Dict[int, List[float]], max_depth: int, 
+                            p_split: float = 0.7) -> DecisionTree:
         attributes_arr = []
         thresholds_arr = []
-        queue = [(0, 0)]
+        queue = [(0, 0, list(range(len(X))))]
         
         while queue:
-            idx, depth = queue.pop(0)
+            idx, depth, data_indices = queue.pop(0)
+            X_subset = X[data_indices]
+            y_subset = y[data_indices]
             
             if depth >= max_depth or random.random() > p_split:
                 attributes_arr.append(None)
-                thresholds_arr.append(random.randint(0, num_classes - 1))
+                majority_class = np.argmax(np.bincount(y_subset)) if len(y_subset) > 0 else 0
+                thresholds_arr.append(majority_class)
             else:
                 attr = random.choice(attributes)
                 threshold = random.choice(possible_thresholds[attr])
-                
                 attributes_arr.append(attr)
                 thresholds_arr.append(threshold)
                 
-                queue.append((2*idx + 1, depth + 1))
-                queue.append((2*idx + 2, depth + 1))
-        
+                left_mask = X_subset[:, attr] <= threshold
+                left_indices = [data_indices[i] for i in np.where(left_mask)[0]]
+                right_indices = [data_indices[i] for i in np.where(~left_mask)[0]]
+                
+                queue.append((2*idx + 1, depth + 1, left_indices))
+                queue.append((2*idx + 2, depth + 1, right_indices))
+    
         return DecisionTree(attributes_arr, thresholds_arr, max_depth)
 
-    def evaluate_population(self, X: np.ndarray, y: np.ndarray, alpha1: float = 0.99, alpha2: float = 0.01, target_tree_depth: int = 21):
+    def evaluate_population(self, alpha1: float = 0.99, alpha2: float = 0.01):
         for tree in self.individuals:
             correct = 0
-            for xi, yi in zip(X, y):
+            for xi, yi in zip(self.X, self.y):
                 node_idx = 0
                 while True:
                     attr = tree.attributes[node_idx] if node_idx < len(tree.attributes) else None
                     if attr is None:
-                        pred = tree.thresholds[node_idx] if node_idx < len(tree.thresholds) else 0
+                        pred = tree.thresholds[node_idx]
                         correct += (pred == yi)
                         break
                     if xi[attr] <= tree.thresholds[node_idx]:
@@ -74,10 +74,9 @@ class Population:
             
             accuracy = correct / len(y)
             current_depth = int(np.log2(len(tree.attributes))) if tree.attributes else 0
-            tree.fitness = alpha1 * (1 - accuracy) + alpha2 * (current_depth / target_tree_depth)
+            tree.fitness = alpha1 * (1 - accuracy) + alpha2 * current_depth
 
     def tournament_selection(self, tournament_size: int = 3) -> List[DecisionTree]:
-        """Selekcja turniejowa"""
         selected = []
         for _ in range(len(self.individuals)):
             contestants = random.sample(self.individuals, tournament_size)
@@ -86,7 +85,6 @@ class Population:
         return selected
 
     def crossover(self, parent1: DecisionTree, parent2: DecisionTree) -> DecisionTree:
-        """Krzyżowanie jednopunktowe"""
         min_len = min(len(parent1.attributes), len(parent2.attributes))
         if min_len == 0:
             return parent1
@@ -101,7 +99,7 @@ class Population:
         """Mutacja losowa"""
         for i in range(len(tree.attributes)):
             if random.random() < mutation_rate:
-                if tree.attributes[i] is None:  # Mutacja liścia
+                if tree.attributes[i] is None:
                     tree.thresholds[i] = random.choice([0, 1])
                 else:  # Mutacja węzła
                     tree.attributes[i] = random.choice(attributes)
