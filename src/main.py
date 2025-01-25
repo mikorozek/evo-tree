@@ -94,28 +94,43 @@ class Population:
         child_thresholds = parent1.thresholds[:crossover_point] + parent2.thresholds[crossover_point:]
         return DecisionTree(child_attrs, child_thresholds, parent1.max_depth)
 
-    def mutate(self, tree: DecisionTree, attributes: List[int], 
-               possible_thresholds: Dict[int, List[float]], mutation_rate: float = 0.1):
-        """Mutacja losowa"""
+    def mutate(self, tree: DecisionTree, 
+               attributes: List[int], possible_thresholds: Dict[int, List[float]], 
+               mutation_rate: float = 0.1) -> None:
         for i in range(len(tree.attributes)):
             if random.random() < mutation_rate:
                 if tree.attributes[i] is None:
-                    tree.thresholds[i] = random.choice([0, 1])
-                else:  # Mutacja węzła
+                    data_in_leaf = self._get_data_for_leaf(self.X, tree, i)
+                    y_subset = self.y[data_in_leaf]
+                    majority_class = np.argmax(np.bincount(y_subset)) if len(y_subset) > 0 else 0
+                    tree.thresholds[i] = majority_class
+                else:
                     tree.attributes[i] = random.choice(attributes)
                     tree.thresholds[i] = random.choice(possible_thresholds[tree.attributes[i]])
+
+    def _get_data_for_leaf(self, X: np.ndarray, tree: DecisionTree, leaf_idx: int) -> List[int]:
+        data_indices = []
+        for i, xi in enumerate(X):
+            current_idx = 0
+            while True:
+                if current_idx == leaf_idx:
+                    data_indices.append(i)
+                    break
+                attr = tree.attributes[current_idx]
+                threshold = tree.thresholds[current_idx]
+                if xi[attr] <= threshold:
+                    current_idx = 2 * current_idx + 1
+                else:
+                    current_idx = 2 * current_idx + 2
+        return data_indices
 
     def create_new_generation(self, attributes: List[int], possible_thresholds: Dict[int, List[float]], 
                               crossover_rate: float = 0.7, mutation_rate: float = 0.2, 
                               elitism: int = 1) -> None:
-        """Tworzy nową generację"""
-        # Elityzm
         elites = sorted(self.individuals, key=lambda x: x.fitness)[:elitism]
         
-        # Selekcja
         selected = self.tournament_selection()
         
-        # Krzyżowanie
         children = []
         for i in range(0, len(selected)-1, 2):
             parent1 = selected[i]
@@ -127,63 +142,13 @@ class Population:
             else:
                 children.extend([parent1, parent2])
         
-        # Mutacja
         for child in children:
             if random.random() < mutation_rate:
                 self.mutate(child, attributes, possible_thresholds)
         
-        # Nowa populacja
         self.individuals = elites + children[:len(self.individuals)-elitism]
         self.generation += 1
 
     def get_best(self) -> DecisionTree:
         return min(self.individuals, key=lambda x: x.fitness)
 
-# 3. Przykład użycia
-if __name__ == "__main__":
-    # Dane treningowe
-    X = np.array([
-        [2.5, 1.2],
-        [3.1, 2.1],
-        [1.8, 1.5],
-        [4.2, 1.8],
-        [2.2, 2.5]
-    ])
-    y = np.array([0, 0, 1, 0, 1])
-    
-    # Parametry
-    params = {
-        'attributes': [0, 1],
-        'possible_thresholds': {
-            0: [2.0, 2.5, 3.0],
-            1: [1.5, 2.0, 2.5]
-        },
-        'max_depth': 3,
-        'population_size': 50,
-        'generations': 100,
-        'elitism': 2
-    }
-    
-    # Inicjalizacja populacji
-    pop = Population(
-        population_size=params['population_size'],
-        attributes=params['attributes'],
-        possible_thresholds=params['possible_thresholds'],
-        max_depth=params['max_depth']
-    )
-    
-    # Główna pętla ewolucyjna
-    for gen in range(params['generations']):
-        pop.evaluate_population(X, y)
-        best = pop.get_best()
-        print(f"Generation {gen+1}, Best Fitness: {best.fitness:.4f}")
-        pop.create_new_generation(
-            attributes=params['attributes'],
-            possible_thresholds=params['possible_thresholds'],
-            elitism=params['elitism']
-        )
-    
-    # Wynik końcowy
-    final_best = pop.get_best()
-    print("\nNajlepsze drzewo:")
-    print(final_best)
