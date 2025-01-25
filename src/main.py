@@ -14,17 +14,26 @@ class DecisionTree:
 
 class Population:
     def __init__(self, population_size: int, attributes: List[int], 
-                 possible_thresholds: Dict[int, List[float]], max_depth: int):
+                 possible_thresholds: Dict[int, List[float]], max_depth: int, num_classes: int):
         self.individuals = [
-            self._create_random_tree(attributes, possible_thresholds, max_depth)
+            self._create_random_tree(attributes, possible_thresholds, max_depth, num_classes)
             for _ in range(population_size)
         ]
         self.generation = 0
     
     @staticmethod
     def _create_random_tree(attributes: List[int], possible_thresholds: Dict[int, List[float]], 
-                            max_depth: int, p_split: float = 0.7) -> DecisionTree:
-        """Generuje losowe drzewo metodą BFS"""
+                            max_depth: int, num_classes: int, p_split: float = 0.7) -> DecisionTree:
+        """
+        Generuje losowe drzewo decyzyjne.
+
+        :param attributes: Lista dostępnych atrybutów.
+        :param possible_thresholds: Słownik możliwych progów dla każdego atrybutu.
+        :param max_depth: Maksymalna głębokość drzewa.
+        :param num_classes: Liczba klas (etykiet).
+        :param p_split: Prawdopodobieństwo podziału węzła.
+        :return: Losowe drzewo decyzyjne.
+        """
         attributes_arr = []
         thresholds_arr = []
         queue = [(0, 0)]
@@ -34,7 +43,7 @@ class Population:
             
             if depth >= max_depth or random.random() > p_split:
                 attributes_arr.append(None)
-                thresholds_arr.append(random.choice([0, 1]))
+                thresholds_arr.append(random.randint(0, num_classes - 1))
             else:
                 attr = random.choice(attributes)
                 threshold = random.choice(possible_thresholds[attr])
@@ -47,19 +56,17 @@ class Population:
         
         return DecisionTree(attributes_arr, thresholds_arr, max_depth)
 
-    def evaluate_population(self, X: np.ndarray, y: np.ndarray, alpha1: float = 0.99, alpha2: float = 0.01):
-        """Oblicza fitness dla wszystkich osobników"""
+    def evaluate_population(self, X: np.ndarray, y: np.ndarray, alpha1: float = 0.99, alpha2: float = 0.01, target_tree_depth: int = 21):
         for tree in self.individuals:
             correct = 0
             for xi, yi in zip(X, y):
                 node_idx = 0
                 while True:
                     attr = tree.attributes[node_idx] if node_idx < len(tree.attributes) else None
-                    if attr is None:  # Liść
+                    if attr is None:
                         pred = tree.thresholds[node_idx] if node_idx < len(tree.thresholds) else 0
                         correct += (pred == yi)
                         break
-                    # Przejście do dziecka
                     if xi[attr] <= tree.thresholds[node_idx]:
                         node_idx = 2*node_idx + 1
                     else:
@@ -67,7 +74,7 @@ class Population:
             
             accuracy = correct / len(y)
             current_depth = int(np.log2(len(tree.attributes))) if tree.attributes else 0
-            tree.fitness = alpha1 * (1 - accuracy) + alpha2 * (current_depth / 21)
+            tree.fitness = alpha1 * (1 - accuracy) + alpha2 * (current_depth / target_tree_depth)
 
     def tournament_selection(self, tournament_size: int = 3) -> List[DecisionTree]:
         """Selekcja turniejowa"""
