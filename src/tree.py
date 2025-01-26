@@ -41,7 +41,7 @@ class DecisionTree:
         for xi in X:
             node_idx = 0
             while True:
-                attr = self.attributes[node_idx] if node_idx < len(self.attributes) else None
+                attr = self.attributes[node_idx]
                 if attr is None:
                     pred = self.thresholds[node_idx]
                     predictions.append(pred)

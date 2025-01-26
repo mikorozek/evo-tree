@@ -11,7 +11,7 @@ parameters = {
         "elites_amount": 3,
         "p_split": 0.8,
         "crossover_rate": 0.5,
-        "mutation_rate": 0.2,
+        "mutation_rate": 0.5,
         "alpha1": 0.99,
         "alpha2": 0.01,
         "num_gen": 150

@@ -125,18 +125,18 @@ class Population:
         )
 
     def mutate(self, tree: DecisionTree, 
-               attributes: List[int], possible_thresholds: Dict[int, List[float]], 
-               mutation_rate: float) -> None:
-        for index, attribute in enumerate(tree.attributes):
-            if (tree.thresholds[index] is not None):
-                if random.random() < mutation_rate:
-                    if attribute is None:
-                        label = self.get_majority_label_for_leaf(tree, index)
-                        tree.thresholds[index] = label
-                    else:
-                        tree.attributes[index] = random.choice(attributes)
-                        label = random.choice(possible_thresholds[attribute])
-                        tree.thresholds[index] = label
+               attributes: List[int], possible_thresholds: Dict[int, List[float]]) -> None:
+            nodes = [(i, attribute) for i, attribute in enumerate(tree.attributes) if tree.thresholds[i] is not None]
+            if nodes:
+                index, attribute = random.choice(nodes)
+                if attribute is None:
+                    label = self.get_majority_label_for_leaf(tree, index)
+                    tree.thresholds[index] = label
+                else:
+                    new_attribute = random.choice(attributes)
+                    tree.attributes[index] = new_attribute
+                    label = random.choice(possible_thresholds[new_attribute])
+                    tree.thresholds[index] = label
 
     def get_majority_label_for_leaf(self, tree: DecisionTree, leaf_index: int) -> int:
         matching_indices = []
@@ -189,11 +189,9 @@ class Population:
 
         for child in children:
             if random.random() < mutation_rate:
-                self.mutate(child, attributes, possible_thresholds, mutation_rate)
+                self.mutate(child, attributes, possible_thresholds)
         
         self.individuals = elites + children[:len(self.individuals)-elites_amount]
-        for tree in self.individuals:
-            tree.print_tree()
         self.generation += 1
 
     def get_best(self) -> DecisionTree:
