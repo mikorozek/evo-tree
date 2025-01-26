@@ -16,6 +16,7 @@ from sklearn.metrics import (
     confusion_matrix,
 )
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.dummy import DummyClassifier
 from population import Population
 
 
@@ -32,10 +33,10 @@ num_splits = int(args.num_splits)
 
 datasets = {
     "letter": "../data/letter-recognition.data",
-    "weather": "../data/weather_forecast_data.csv",
-    "wine": "../data/WineQT.csv",
-    "mobile": "../data/mobile_price.csv",
-    "cancer": "../data/Cancer_Data.csv",
+    # "weather": "../data/weather_forecast_data.csv",
+    # "wine": "../data/WineQT.csv",
+    # "mobile": "../data/mobile_price.csv",
+    # "cancer": "../data/Cancer_Data.csv",
 }
 
 
@@ -140,6 +141,12 @@ for dataset, dataset_path in datasets.items():
             cv_id3_test_rec_scores = []
             cv_id3_test_f1_scores = []
 
+            cv_dummy_train_acc_scores = []
+            cv_dummy_test_acc_scores = []
+            cv_dummy_test_prec_scores = []
+            cv_dummy_test_rec_scores = []
+            cv_dummy_test_f1_scores = []
+
             for fold_idx, (train_idx, test_idx) in enumerate(kf.split(X)):
                 X_train, X_test = X[train_idx], X[test_idx]
                 y_train, y_test = y[train_idx], y[test_idx]
@@ -170,7 +177,7 @@ for dataset, dataset_path in datasets.items():
                     min_fitness_score_this_generation = pop.evaluate_population(
                         params["alpha1"], params["alpha2"]
                     )
-                    print(min_fitness_score_this_generation)
+                    # print(min_fitness_score_this_generation)
                     generations_with_no_progress_count += 1
                     if (
                         min_fitness_score_this_generation
@@ -191,14 +198,24 @@ for dataset, dataset_path in datasets.items():
                 if fold_idx == 0:
                     y_test_decoded = le.inverse_transform(y_test)
                     y_test_pred_decoded = le.inverse_transform(y_test_pred)
-                    cm = confusion_matrix(y_test, y_test_pred)
+                    classes = sorted(set(y_test_decoded) | set(y_test_pred_decoded))
+                    cm = confusion_matrix(
+                        y_test_decoded, y_test_pred_decoded, labels=classes
+                    )
                     plt.figure(figsize=(10, 8))
-                    sns.heatmap(cm, annot=True, fmt="d")
+                    sns.heatmap(
+                        cm,
+                        annot=True,
+                        fmt="d",
+                        xticklabels=classes,
+                        yticklabels=classes,
+                    )
                     plt.title(
                         f"Confusion Matrix - {dataset} - {parameter} - {params[parameter]} - {old_value}"
                     )
                     plt.ylabel("True label")
                     plt.xlabel("Predicted label")
+                    plt.tight_layout()
                     plt.savefig(
                         f"../cf_matrix/{dataset}_{parameter}_{params[parameter]}_{old_value}.png"
                     )
@@ -235,6 +252,27 @@ for dataset, dataset_path in datasets.items():
                     f1_score(y_test, id3_y_test_pred, average="weighted")
                 )
 
+                dummy = DummyClassifier(strategy="most_frequent")
+                dummy.fit(X_train, y_train)
+                dummy_y_train_pred = dummy.predict(X_train)
+                dummy_y_test_pred = dummy.predict(X_test)
+
+                cv_dummy_train_acc_scores.append(
+                    accuracy_score(y_train, dummy_y_train_pred)
+                )
+                cv_dummy_test_acc_scores.append(
+                    accuracy_score(y_test, dummy_y_test_pred)
+                )
+                cv_dummy_test_prec_scores.append(
+                    precision_score(y_test, dummy_y_test_pred, average="weighted")
+                )
+                cv_dummy_test_rec_scores.append(
+                    recall_score(y_test, dummy_y_test_pred, average="weighted")
+                )
+                cv_dummy_test_f1_scores.append(
+                    f1_score(y_test, dummy_y_test_pred, average="weighted")
+                )
+
             result = {
                 "old_value": old_value,
                 "new_value": params[parameter],
@@ -261,6 +299,16 @@ for dataset, dataset_path in datasets.items():
                 "id3_std_dev_test_rec": np.std(cv_id3_test_rec_scores),
                 "id3_mean_cv_test_f1": np.mean(cv_id3_test_f1_scores),
                 "id3_std_dev_test_f1": np.std(cv_id3_test_f1_scores),
+                "dummy_mean_cv_train_acc": np.mean(cv_dummy_train_acc_scores),
+                "dummy_std_dev_train_acc": np.std(cv_dummy_train_acc_scores),
+                "dummy_mean_cv_test_acc": np.mean(cv_dummy_test_acc_scores),
+                "dummy_std_dev_test_acc": np.std(cv_dummy_test_acc_scores),
+                "dummy_mean_cv_test_prec": np.mean(cv_dummy_test_prec_scores),
+                "dummy_std_dev_test_prec": np.std(cv_dummy_test_prec_scores),
+                "dummy_mean_cv_test_rec": np.mean(cv_dummy_test_rec_scores),
+                "dummy_std_dev_test_rec": np.std(cv_dummy_test_rec_scores),
+                "dummy_mean_cv_test_f1": np.mean(cv_dummy_test_f1_scores),
+                "dummy_std_dev_test_f1": np.std(cv_dummy_test_f1_scores),
             }
             results.append(result)
 
