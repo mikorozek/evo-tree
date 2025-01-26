@@ -6,7 +6,8 @@ import argparse
 from typing import Dict, List
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.tree import DecisionTreeClassifier
 from population import Population
 
 
@@ -47,7 +48,7 @@ param_ranges = {
 param_dist = {
     "max_depth": [8, 10, 12, 14, 16],
     "population_size": [150, 300, 500, 1000, 2000],
-    "elites_amount": [1, 2, 3, 4],
+    "elites_amount": [10, 15, 21, 31],
     "p_split": [0.7, 0.8, 0.9],
     "crossover_rate": [0.4, 0.5, 0.6],
     "mutation_rate": [0.1, 0.15, 0.2, 0.25],
@@ -79,6 +80,18 @@ def random_search_params(param_ranges):
             params[param_name] = random.uniform(min_val, max_val)
     return params
 
+
+init_params = {
+    "max_depth": 9,
+    "population_size": 494,
+    "elites_amount": 10,
+    "p_split": 0.6939588167822919,
+    "crossover_rate": 0.4158614032572565,
+    "mutation_rate": 0.3468609511181633,
+    "alpha1": 0.9653208422298942,
+    "alpha2": 0.012685866059831859,
+    "num_gen": 294,
+}
 
 for dataset, dataset_path in datasets.items():
     print(f"Cross-Validation for {dataset}")
@@ -119,11 +132,13 @@ for dataset, dataset_path in datasets.items():
     results = []
     kf = KFold(n_splits=num_splits, shuffle=True, random_state=42)
 
-    params = {key: random.choice(values) for key, values in param_dist.items()}
     for trial in range(num_trials):
-        params = random_search_params(param_ranges)
-        cv_test_scores = []
+        # params = random_search_params(param_ranges)
         cv_train_scores = []
+        cv_test_scores = []
+
+        cv_id3_train_scores = []
+        cv_id3_test_scores = []
 
         for fold_idx, (train_idx, test_idx) in enumerate(kf.split(X)):
             X_train, X_test = X[train_idx], X[test_idx]
@@ -167,12 +182,20 @@ for dataset, dataset_path in datasets.items():
                     generations_with_no_progress_count = 0
 
             best_tree = pop.get_best()
+
             y_train_pred = best_tree.predict(X_train)
             y_test_pred = best_tree.predict(X_test)
             train_score = accuracy_score(y_train, y_train_pred)
             test_score = accuracy_score(y_test, y_test_pred)
             cv_train_scores.append(train_score)
             cv_test_scores.append(test_score)
+
+            id3 = DecisionTreeClassifier(criterion="entropy")
+            id3.fit(X_train, y_train)
+            id3_train_score = id3.score(X_train, y_train)
+            id3_test_score = id3.score(X_test, y_test)
+            cv_id3_train_scores.append(train_score)
+            cv_id3_test_scores.append(test_score)
 
         if cv_train_scores and cv_test_scores:
             result = {
