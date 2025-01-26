@@ -2,8 +2,8 @@ from unittest.mock import patch
 
 import numpy as np
 import pytest
-from test_common import are_subtrees_equal
-from test_common import two_decision_node_tree, single_node_tree
+from test_common import (are_subtrees_equal, single_node_tree,
+                         two_decision_node_tree)
 
 from population import Population
 from tree import DecisionTree

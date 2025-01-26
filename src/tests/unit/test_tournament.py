@@ -1,10 +1,10 @@
 from unittest.mock import patch
 
 import pytest
+from test_common import sample_data
 
 from population import Population
 from tree import DecisionTree
-from test_common import sample_data
 
 
 @pytest.fixture
