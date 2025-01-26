@@ -33,10 +33,10 @@ num_splits = int(args.num_splits)
 
 datasets = {
     "letter": "../data/letter-recognition.data",
-    # "weather": "../data/weather_forecast_data.csv",
-    # "wine": "../data/WineQT.csv",
-    # "mobile": "../data/mobile_price.csv",
-    # "cancer": "../data/Cancer_Data.csv",
+    "weather": "../data/weather_forecast_data.csv",
+    "wine": "../data/WineQT.csv",
+    "mobile": "../data/mobile_price.csv",
+    "cancer": "../data/Cancer_Data.csv",
 }
 
 
