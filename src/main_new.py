@@ -1,10 +1,8 @@
 import pandas as pd
 import numpy as np
 import random
-import os
 import json
 import argparse
-import csv
 from typing import Dict, List
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import LabelEncoder
@@ -27,22 +25,35 @@ num_splits = int(args.num_splits)
 datasets = {
     "letter": "../data/letter-recognition.data",
     "weather": "../data/weather_forecast_data.csv",
-    "wine": "../data/Wine_QT.csv",
+    "wine": "../data/WineQT.csv",
     "mobile": "../data/mobile_price.csv",
     "cancer": "../data/Cancer_Data.csv",
 }
 
 
 param_ranges = {
-    "max_depth": ("int", 2, 10),
-    "population_size": ("int", 50, 500),
+    "max_depth": ("int", 2, 5),
+    "population_size": ("int", 50, 100),
     "elites_amount": ("int", 1, 10),
     "p_split": ("float", 0.5, 0.8),
     "crossover_rate": ("float", 0.4, 0.8),
     "mutation_rate": ("float", 0.05, 0.5),
     "alpha1": ("float", 0.95, 1.0),
     "alpha2": ("float", 0.01, 0.2),
-    "num_gen": ("int", 80, 500),
+    "num_gen": ("int", 20, 50),
+}
+
+
+param_dist = {
+    "max_depth": [8, 10, 12, 14, 16],
+    "population_size": [150, 300, 500, 1000, 2000],
+    "elites_amount": [1, 2, 3, 4],
+    "p_split": [0.7, 0.8, 0.9],
+    "crossover_rate": [0.4, 0.5, 0.6],
+    "mutation_rate": [0.1, 0.15, 0.2, 0.25],
+    "alpha1": [0.95, 0.97, 0.99, 1.0],
+    "alpha2": [0.01, 0.03, 0.05, 0.07, 0.15, 0.3, 0.6, 0.9],
+    "num_gen": [100, 300, 600, 1000],
 }
 
 
@@ -70,136 +81,110 @@ def random_search_params(param_ranges):
 
 
 for dataset, dataset_path in datasets.items():
-    df = pd.read_csv(dataset_path, header=None)
-    if dataset is "wine":
-        df = df.drop(-1, axis=1).values
-    elif dataset is "cancer":
-        df = df.drop(0, axis=1).values
-
+    print(f"Cross-Validation for {dataset}")
     le = LabelEncoder()
-
-    if dataset is "letter" or "cancer":
+    if dataset == "letter":
+        df = pd.read_csv(dataset_path, header=None)
         df[0] = le.fit_transform(df[0])
         X = df.drop(0, axis=1).values
         y = df[0].values
-    elif dataset is "weather" or "mobile" or "wine":
-        df[-1] = le.fit_transform(df[-1])
-        X = df.drop(-1, axis=1).values
-        y = df[-1].values
+    elif dataset == "cancer":
+        df = pd.read_csv(dataset_path, header=None, skiprows=1)
+        df = df.drop(0, axis=1)
+        df[1] = le.fit_transform(df[1])
+        X = df.drop(1, axis=1).values
+        y = df[1].values
+    elif dataset == "wine":
+        df = pd.read_csv(dataset_path, header=None, skiprows=1)
+        df = df.iloc[:, :-1]
+        df.iloc[:, -1] = le.fit_transform(df.iloc[:, -1])
+        X = df.iloc[:, :-1].values
+        y = df.iloc[:, -1].values
+    elif dataset == "weather":
+        df = pd.read_csv(dataset_path, header=None, skiprows=1)
+        df.iloc[:, -1] = df.iloc[:, -1].str.lower()
+        df.iloc[:, -1] = le.fit_transform(df.iloc[:, -1])
+        df = df.apply(pd.to_numeric)
+        X = df.iloc[:, :-1].values
+        y = df.iloc[:, -1].values
+    elif dataset == "mobile":
+        df = pd.read_csv(dataset_path, header=None, skiprows=1)
+        df.iloc[:, -1] = le.fit_transform(df.iloc[:, -1])
+        X = df.iloc[:, :-1].values
+        y = df.iloc[:, -1].values
+    else:
+        print("Unsupported dataset")
+        exit(-1)
 
     results = []
     kf = KFold(n_splits=num_splits, shuffle=True, random_state=42)
 
-
+    params = {key: random.choice(values) for key, values in param_dist.items()}
     for trial in range(num_trials):
         params = random_search_params(param_ranges)
-        cv_scores = []
+        cv_test_scores = []
+        cv_train_scores = []
 
-        for fold_idx, (train_idx, test_idx) in enumerate(kf.split(X))
+        for fold_idx, (train_idx, test_idx) in enumerate(kf.split(X)):
             X_train, X_test = X[train_idx], X[test_idx]
             y_train, y_test = y[train_idx], y[test_idx]
 
-            try:
-                possible_thresholds = calculate_possible_thresholds(X_train)
-                pop = Population(
-                    X=X_train,
-                    y=y_train,
-                    population_size=params["population_size"],
+            possible_thresholds = calculate_possible_thresholds(X_train)
+            pop = Population(
+                X=X_train,
+                y=y_train,
+                population_size=params["population_size"],
+                attributes=list(range(X_train.shape[1])),
+                possible_thresholds=possible_thresholds,
+                max_depth=params["max_depth"],
+                p_split=params["p_split"],
+            )
+
+            generations_with_no_progress_count = 0
+            min_fitness_score_all_generations = 1000
+            for gen in range(params["num_gen"]):
+                if generations_with_no_progress_count > 20:
+                    break
+                pop.create_new_generation(
                     attributes=list(range(X_train.shape[1])),
                     possible_thresholds=possible_thresholds,
-                    max_depth=params["max_depth"],
-                    p_split=params["p_split"],
+                    elites_amount=params["elites_amount"],
+                    crossover_rate=params["crossover_rate"],
+                    mutation_rate=params["mutation_rate"],
                 )
-                for gen in range(params["num_gen"]):
-                    pop.create_new_generation(
-                        attributes=list(range(X_train.shape[1])),
-                        possible_thresholds=possible_thresholds,
-                        elites_amount=params["elites_amount"],
-                        crossover_rate=params["crossover_rate"],
-                        mutation_rate=params["mutation_rate"]
+                min_fitness_score_this_generation = pop.evaluate_population(
+                    params["alpha1"], params["alpha2"]
+                )
+                print(min_fitness_score_this_generation)
+                generations_with_no_progress_count += 1
+                if (
+                    min_fitness_score_this_generation
+                    < min_fitness_score_all_generations
+                ):
+                    min_fitness_score_all_generations = (
+                        min_fitness_score_this_generation
                     )
-                    pop.evaluate_population(params["alpha1"], params["alpha2"])
+                    generations_with_no_progress_count = 0
 
-                best_tree = pop.get_best()
-                y_pred = best_tree.predict(X_test)
-                score = accuracy_score(y_test, y_pred)
-                cv_scores.append(score)
+            best_tree = pop.get_best()
+            y_train_pred = best_tree.predict(X_train)
+            y_test_pred = best_tree.predict(X_test)
+            train_score = accuracy_score(y_train, y_train_pred)
+            test_score = accuracy_score(y_test, y_test_pred)
+            cv_train_scores.append(train_score)
+            cv_test_scores.append(test_score)
 
-            except Exception as e:
-                print(f"Error in trial {trial + 1}, fold {fold_idx + 1}: {str(e)}")
-
-        if cv_scores:
+        if cv_train_scores and cv_test_scores:
             result = {
                 "params": params,
-                "cv_scores": cv_scores,
-                "mean_cv_score": np.mean(cv_scores),
-                "std_dev_score": np.std(cv_scores)
+                "cv_train_scores": cv_train_scores,
+                "mean_cv_train_score": np.mean(cv_train_scores),
+                "std_dev_train_score": np.std(cv_train_scores),
+                "cv_test_scores": cv_test_scores,
+                "mean_cv_test_score": np.mean(cv_test_scores),
+                "std_dev_test_score": np.std(cv_test_scores),
             }
             results.append(result)
 
     with open(f"../results/{dataset}.json", "a") as file_handle:
         json.dump(results, file_handle, indent=4)
-
-
-filename = "hyperparameter_results.csv"
-if not os.path.isfile(filename):
-    with open(filename, "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(["Params", "Test Accuracy"])
-
-best_score = 0
-best_params = None
-
-# Główna pętla przeszukiwania
-trial_counter = 1
-while True:
-    # Losowa próbka hiperparametrów
-    params = random_search_params(param_ranges)
-    try:
-        # Trening i ewaluacja
-        possible_thresholds = calculate_possible_thresholds(X_train)
-
-        print(params)
-        pop = Population(
-            X=X_train,
-            y=y_train,
-            population_size=params["population_size"],
-            attributes=list(range(16)),
-            possible_thresholds=possible_thresholds,
-            max_depth=params["max_depth"],
-            p_split=params["p_split"],
-        )
-
-        # Przebieg treningowy
-        for gen in range(params["num_gen"]):
-            best = pop.get_best()
-            print(f"Generation {gen+1}, Best Fitness: {best.fitness:.4f}")
-            pop.create_new_generation(
-                attributes=list(range(16)),
-                possible_thresholds=possible_thresholds,
-                elites_amount=params["elites_amount"],
-                crossover_rate=params["crossover_rate"],
-                mutation_rate=params["mutation_rate"],
-            )
-            pop.evaluate_population(params["alpha1"], params["alpha2"])
-
-        best_tree = pop.get_best()
-        y_pred = best_tree.predict(X_test)
-        test_acc = accuracy_score(y_test, y_pred)
-
-        if test_acc > best_score:
-            best_score = test_acc
-            best_params = params
-            print(f"\nNowy najlepszy wynik: {best_score:.4f}")
-            print("Parametry:", best_params)
-
-        with open(filename, "a", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow([params, test_acc])
-
-        print(f"Próba {trial_counter} | Dokładność: {test_acc:.4f}")
-        trial_counter += 1
-
-    except Exception as e:
-        print(f"Błąd w próbie {trial_counter}: {str(e)}")
-        continue

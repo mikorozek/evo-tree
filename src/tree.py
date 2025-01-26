@@ -2,12 +2,13 @@ from typing import List
 import numpy as np
 from sklearn.metrics import accuracy_score
 
+
 class DecisionTree:
     def __init__(self, attributes: List[int], thresholds: List[float]):
         self.attributes = attributes
         self.thresholds = thresholds
-        self.fitness = float('inf')
-    
+        self.fitness = float("inf")
+
     def __repr__(self):
         return f"Attributes: {self.attributes}\nThresholds: {self.thresholds}\nFitness: {self.fitness:.4f}"
 
@@ -17,21 +18,25 @@ class DecisionTree:
 
         attr = self.attributes[node_idx]
         threshold = self.thresholds[node_idx]
-        
+
         if attr is None:
             print(f"{prefix}[{node_idx}] Class: {threshold}")
             return
         else:
-            feat_name = feature_names[attr] if feature_names and attr < len(feature_names) else f"Feature {attr}"
+            feat_name = (
+                feature_names[attr]
+                if feature_names and attr < len(feature_names)
+                else f"Feature {attr}"
+            )
             print(f"{prefix}[{node_idx}] {feat_name} <= {threshold}")
-        
+
         left_idx = 2 * node_idx + 1
         right_idx = 2 * node_idx + 2
-        
+
         if left_idx < len(self.attributes):
             print(f"{prefix}  ├── Left (True):")
             self.print_tree(feature_names, left_idx, prefix + "  │   ")
-            
+
         if right_idx < len(self.attributes):
             print(f"{prefix}  └── Right (False):")
             self.print_tree(feature_names, right_idx, prefix + "      ")
@@ -54,8 +59,8 @@ class DecisionTree:
 
     def calculate_depth(self) -> int:
         max_depth = 0
-        for idx, attribute in enumerate(self.attributes):
-            if attribute is not None:
+        for idx, threshold in enumerate(self.thresholds):
+            if threshold is not None:
                 depth = int(np.floor(np.log2(idx + 1)))
                 max_depth = max(max_depth, depth)
         return max_depth
