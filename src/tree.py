@@ -66,6 +66,11 @@ class DecisionTree:
                 max_depth = max(max_depth, depth)
         return max_depth
 
+    def calculate_node_amount(self) -> int:
+        return len(
+            [threshold for threshold in self.thresholds if threshold is not None]
+        )
+
     def score(self, X: np.ndarray, y: np.ndarray) -> float:
         y_pred = self.predict(X)
         return accuracy_score(y, y_pred)
