@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import random
 import json
 import argparse
 from typing import Dict, List
@@ -128,6 +127,7 @@ for dataset, dataset_path in datasets.items():
             params[parameter] = value
 
             tree_depth_levels = []
+            tree_node_amounts = []
 
             cv_train_acc_scores = []
             cv_test_acc_scores = []
@@ -191,6 +191,7 @@ for dataset, dataset_path in datasets.items():
                 best_tree = pop.get_best()
 
                 tree_depth_levels.append(best_tree.calculate_depth())
+                tree_node_amounts.append(best_tree.calculate_node_amount())
 
                 y_train_pred = best_tree.predict(X_train)
                 y_test_pred = best_tree.predict(X_test)
@@ -277,6 +278,8 @@ for dataset, dataset_path in datasets.items():
                 "old_value": old_value,
                 "new_value": params[parameter],
                 "params": params,
+                "mean_node_amount": np.mean(tree_node_amounts),
+                "std_dev_node_amount": np.std(tree_node_amounts),
                 "mean_tree_depth": np.mean(tree_depth_levels),
                 "std_dev_tree_depth": np.std(tree_depth_levels),
                 "mean_cv_train_acc": np.mean(cv_train_acc_scores),
