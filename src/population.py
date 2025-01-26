@@ -105,6 +105,8 @@ class Population:
         p2_idx = random.choice(p2_nodes)
         
         def copy_subtree(src_idx: int, dest_idx: int, src_tree: DecisionTree, dest_attrs: list, dest_thresholds: list) -> None:
+            if src_idx >= len(src_tree.attributes):
+                return
             if dest_idx >= len(dest_attrs):
                 dest_attrs.extend([None] * (dest_idx - len(dest_attrs) + 1))
                 dest_thresholds.extend([None] * (dest_idx - len(dest_thresholds) + 1))
