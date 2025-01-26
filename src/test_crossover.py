@@ -5,77 +5,77 @@ from unittest.mock import patch
 
 @pytest.fixture
 def single_node_tree():
-    """
-    indeksy (1-based):
-    1: [leaf, class 0]
-    
-    struktura:
-    [1: leaf (class 0)]
-
-    reprezentacja:
-    [1: leaf class:0]
-    """
-    return DecisionTree(
-        attributes=[None],
-        thresholds=[0],
-        max_depth=0
-    )
+   """
+   indices (1-based):
+   1: [leaf, class 0]
+   
+   structure:
+   [1: leaf (class 0)]
+   
+   representation:
+   [1: leaf class:0]
+   """
+   return DecisionTree(
+       attributes=[None],
+       thresholds=[0],
+       max_depth=0
+   )
 
 @pytest.fixture
 def two_decision_node_tree():
-    """
-    indeksy (1-based):
-    1: [x1 ≤ 4]
-    2: [leaf, class 1]
-    3: [x5 ≤ 7]
-    4: [leaf, class 0]
-    5: [leaf, class 1]
-    
-    reprezentacja:
-         x1 ≤ 4
-           |
-     +-----+-----+
-     |           |
+   """
+   indices (1-based):
+   1: [x1 ≤ 4]
+   2: [leaf, class 1]  
+   3: [x5 ≤ 7]
+   4: [leaf, class 0]
+   5: [leaf, class 1]
+   
+   representation:
+        x1 ≤ 4
+          |
+    +-----+-----+
+    |           |
 [leaf class:1]  x5 ≤ 7
-                 |
-           +-----+-----+
-           |           |
-    [leaf class:0] [leaf class:1]
-    """
-    return DecisionTree(
-        attributes=[1, None, 5, None, None, None, None],
-        thresholds=[4, 1, 7, None, None, 2, 1],
-        max_depth=2
-    )
+                |
+          +-----+-----+
+          |           |
+   [leaf class:0] [leaf class:1]
+   """
+   return DecisionTree(
+       attributes=[1, None, 5, None, None, None, None],
+       thresholds=[4, 1, 7, None, None, 2, 1],
+       max_depth=2
+   )
 
 @pytest.fixture
 def balanced_tree():
-    """
-    indeksy (1-based):
-    1: [x1 ≤ 5]
-    2: [x2 ≤ 3]
-    3: [x3 ≤ 7]
-    4: [leaf, class 0]
-    5: [leaf, class 1]
-    6: [leaf, class 1]
-    7: [leaf, class 0]
-
-    reprezentacja:
-            x1 ≤ 5
-               |
-        +------+------+
-        |             |
-     x2 ≤ 3        x3 ≤ 7
-        |             |
-    +---+---+     +---+---+
-    |       |     |       |
+   """
+   indices (1-based):
+   1: [x1 ≤ 5]
+   2: [x2 ≤ 3]
+   3: [x3 ≤ 7]
+   4: [leaf, class 0]
+   5: [leaf, class 1]
+   6: [leaf, class 1]
+   7: [leaf, class 0]
+   
+   representation:
+           x1 ≤ 5
+              |
+       +------+------+
+       |             |
+    x2 ≤ 3        x3 ≤ 7
+       |             |
+   +---+---+     +---+---+
+   |       |     |       |
 [class:0] [class:1] [class:1] [class:0]
-    """
-    return DecisionTree(
-        attributes=[1, 2, 3, None, None, None, None],
-        thresholds=[5, 3, 7, 0, 1, 1, 0],
-        max_depth=2
-    )
+   """
+   return DecisionTree(
+       attributes=[1, 2, 3, None, None, None, None],
+       thresholds=[5, 3, 7, 0, 1, 1, 0],
+       max_depth=2
+   )
 
 
 def are_subtrees_equal(tree1: DecisionTree, tree2: DecisionTree, idx1: int, idx2: int) -> bool:
@@ -133,22 +133,22 @@ def assert_subtree_unchanged(result: DecisionTree, original: DecisionTree, start
 
 def print_crossover_visualization(parent1, parent2, child1, child2, mock_indices):
     """
-    Wyświetla drzewa przed i po operacji crossover
+    Displays trees before and after crossover operation
     """
     print("\n" + "="*50)
-    print(f"CROSSOVER z indeksami: {mock_indices}")
+    print(f"CROSSOVER with indices: {mock_indices}")
     print("="*50)
     
-    print("\nDrzewa rodzicielskie:")
-    print("\nRodzic 1:")
+    print("\nParent trees:")
+    print("\nParent 1:")
     parent1.print_tree()
-    print("\nRodzic 2:")
+    print("\nParent 2:")
     parent2.print_tree()
     
-    print("\nPo crossover:")
-    print("\nDziecko 1:")
+    print("\nAfter crossover:")
+    print("\nChild 1:")
     child1.print_tree()
-    print("\nDziecko 2:")
+    print("\nChild 2:")
     child2.print_tree()
     print("\n" + "="*50 + "\n")
 
