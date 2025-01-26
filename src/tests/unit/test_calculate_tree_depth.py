@@ -1,4 +1,10 @@
 from tree import DecisionTree
+from test_common import (
+    single_node_tree,
+    two_decision_node_tree,
+    balanced_tree,
+    very_unbalanced_tree
+)
 
 
 def test_single_node_depth(single_node_tree):

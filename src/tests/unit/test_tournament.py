@@ -4,6 +4,7 @@ import pytest
 
 from population import Population
 from tree import DecisionTree
+from test_common import sample_data
 
 
 @pytest.fixture

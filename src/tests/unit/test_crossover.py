@@ -1,6 +1,12 @@
 from unittest.mock import patch
 
 from test_common import are_subtrees_equal, assert_subtree_unchanged
+from test_common import (
+        single_node_tree,
+        two_decision_node_tree,
+        balanced_tree,
+        very_unbalanced_tree
+)
 
 from population import Population
 
