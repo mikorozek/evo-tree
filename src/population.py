@@ -93,39 +93,41 @@ class Population:
 
     @staticmethod
     def crossover(parent1: DecisionTree, parent2: DecisionTree) -> tuple[DecisionTree, DecisionTree]:
-        p1_nodes = [i for i, _ in enumerate(parent1.attributes)]
-        p2_nodes = [i for i, _ in enumerate(parent2.attributes)]
+        def get_nodes(parent: DecisionTree) -> list[int]:
+            return list(range(len(parent.attributes)))
+        
+        p1_nodes, p2_nodes = get_nodes(parent1), get_nodes(parent2)
         
         if not p1_nodes or not p2_nodes:
             return parent1, parent2
-            
+        
         p1_idx = random.choice(p1_nodes)
         p2_idx = random.choice(p2_nodes)
         
-        child1_attributes = parent1.attributes.copy()
-        child1_thresholds = parent1.thresholds.copy()
-        
-        child2_attributes = parent2.attributes.copy()
-        child2_thresholds = parent2.thresholds.copy()
-        
-        def copy_subtree(src_idx, dest_idx, src_tree, dest_attributes, dest_thresholds):
-            if dest_idx >= len(dest_attributes):
-                dest_attributes.extend([None]*(dest_idx - len(dest_attributes) + 1))
-                dest_thresholds.extend([None]*(dest_idx - len(dest_thresholds) + 1))
+        def copy_subtree(src_idx: int, dest_idx: int, src_tree: DecisionTree, dest_attrs: list, dest_thresholds: list) -> None:
+            if dest_idx >= len(dest_attrs):
+                dest_attrs.extend([None] * (dest_idx - len(dest_attrs) + 1))
+                dest_thresholds.extend([None] * (dest_idx - len(dest_thresholds) + 1))
             
-            dest_attributes[dest_idx] = src_tree.attributes[src_idx]
+            dest_attrs[dest_idx] = src_tree.attributes[src_idx]
             dest_thresholds[dest_idx] = src_tree.thresholds[src_idx]
             
             if src_tree.attributes[src_idx] is not None:
-                copy_subtree(2*src_idx + 1, 2*dest_idx + 1, src_tree, dest_attributes, dest_thresholds)
-                copy_subtree(2*src_idx + 2, 2*dest_idx + 2, src_tree, dest_attributes, dest_thresholds)
+                copy_subtree(2*src_idx + 1, 2*dest_idx + 1, src_tree, dest_attrs, dest_thresholds)
+                copy_subtree(2*src_idx + 2, 2*dest_idx + 2, src_tree, dest_attrs, dest_thresholds)
         
-        copy_subtree(p2_idx, p1_idx, parent2, child1_attributes, child1_thresholds)
-        copy_subtree(p1_idx, p2_idx, parent1, child2_attributes, child2_thresholds)
+        def create_child(base_parent: DecisionTree, donor_parent: DecisionTree, base_idx: int, donor_idx: int) -> tuple[list, list]:
+            new_attrs = base_parent.attributes.copy()
+            new_thresholds = base_parent.thresholds.copy()
+            copy_subtree(donor_idx, base_idx, donor_parent, new_attrs, new_thresholds)
+            return new_attrs, new_thresholds
+        
+        child1_attrs, child1_thresholds = create_child(parent1, parent2, p1_idx, p2_idx)
+        child2_attrs, child2_thresholds = create_child(parent2, parent1, p2_idx, p1_idx)
         
         return (
-            DecisionTree(child1_attributes, child1_thresholds, parent1.max_depth),
-            DecisionTree(child2_attributes, child2_thresholds, parent2.max_depth)
+            DecisionTree(child1_attrs, child1_thresholds, parent1.max_depth),
+            DecisionTree(child2_attrs, child2_thresholds, parent2.max_depth)
         )
 
     def mutate(self, tree: DecisionTree, 

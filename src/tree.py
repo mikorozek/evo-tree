@@ -61,7 +61,6 @@ class DecisionTree:
                 max_depth = max(max_depth, depth)
         return max_depth
 
-
     def score(self, X: np.ndarray, y: np.ndarray) -> float:
         y_pred = self.predict(X)
         return accuracy_score(y, y_pred)
