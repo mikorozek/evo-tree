@@ -13,6 +13,31 @@ class DecisionTree:
     def __repr__(self):
         return f"Attributes: {self.attributes}\nThresholds: {self.thresholds}\nFitness: {self.fitness:.4f}"
 
+    def print_tree(self, feature_names=None, node_idx=0, prefix=""):
+        if node_idx >= len(self.attributes):
+            return
+
+        attr = self.attributes[node_idx]
+        threshold = self.thresholds[node_idx]
+        
+        if attr is None:
+            print(f"{prefix}[{node_idx}] Class: {threshold}")
+            return
+        else:
+            feat_name = feature_names[attr] if feature_names and attr < len(feature_names) else f"Feature {attr}"
+            print(f"{prefix}[{node_idx}] {feat_name} <= {threshold}")
+        
+        left_idx = 2 * node_idx + 1
+        right_idx = 2 * node_idx + 2
+        
+        if left_idx < len(self.attributes):
+            print(f"{prefix}  ├── Left (True):")
+            self.print_tree(feature_names, left_idx, prefix + "  │   ")
+            
+        if right_idx < len(self.attributes):
+            print(f"{prefix}  └── Right (False):")
+            self.print_tree(feature_names, right_idx, prefix + "      ")
+
     def predict(self, X: np.ndarray) -> np.ndarray:
         predictions = []
         for xi in X:
