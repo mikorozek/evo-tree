@@ -134,11 +134,17 @@ for dataset, dataset_path in datasets.items():
 
     for trial in range(num_trials):
         # params = random_search_params(param_ranges)
-        cv_train_scores = []
-        cv_test_scores = []
+        cv_train_acc_scores = []
+        cv_test_acc_scores = []
+        cv_test_prec_scores = []
+        cv_test_rec_scores = []
+        cv_test_f1_scores = []
 
-        cv_id3_train_scores = []
-        cv_id3_test_scores = []
+        cv_id3_train_acc_scores = []
+        cv_id3_test_acc_scores = []
+        cv_id3_test_prec_scores = []
+        cv_id3_test_rec_scores = []
+        cv_id3_test_f1_scores = []
 
         for fold_idx, (train_idx, test_idx) in enumerate(kf.split(X)):
             X_train, X_test = X[train_idx], X[test_idx]
@@ -185,29 +191,47 @@ for dataset, dataset_path in datasets.items():
 
             y_train_pred = best_tree.predict(X_train)
             y_test_pred = best_tree.predict(X_test)
-            train_score = accuracy_score(y_train, y_train_pred)
-            test_score = accuracy_score(y_test, y_test_pred)
-            cv_train_scores.append(train_score)
-            cv_test_scores.append(test_score)
+            cv_train_acc_scores.append(accuracy_score(y_train, y_train_pred))
+            cv_test_acc_scores.append(accuracy_score(y_test, y_test_pred))
+            cv_test_prec_scores.append(precision_score(y_test, y_test_pred))
+            cv_test_rec_scores.append(precision_score(y_test, y_test_pred))
+            cv_test_f1_scores.append(f1_score(y_test, y_test_pred))
 
             id3 = DecisionTreeClassifier(criterion="entropy")
             id3.fit(X_train, y_train)
-            id3_train_score = id3.score(X_train, y_train)
-            id3_test_score = id3.score(X_test, y_test)
-            cv_id3_train_scores.append(train_score)
-            cv_id3_test_scores.append(test_score)
+            id3_y_train_pred = id3.predict(X_train)
+            id3_y_test_pred = id3.predict(X_test)
 
-        if cv_train_scores and cv_test_scores:
-            result = {
-                "params": params,
-                "cv_train_scores": cv_train_scores,
-                "mean_cv_train_score": np.mean(cv_train_scores),
-                "std_dev_train_score": np.std(cv_train_scores),
-                "cv_test_scores": cv_test_scores,
-                "mean_cv_test_score": np.mean(cv_test_scores),
-                "std_dev_test_score": np.std(cv_test_scores),
-            }
-            results.append(result)
+            cv_id3_train_acc_scores.append(accuracy_score(y_train, id3_y_train_pred))
+            cv_id3_test_acc_scores.append(accuracy_score(y_test, id3_y_test_pred))
+            cv_id3_test_prec_scores.append(precision_score(y_test, id3_y_test_pred))
+            cv_id3_test_rec_scores.append(precision_score(y_test, id3_y_test_pred))
+            cv_id3_test_f1_scores.append(f1_score(y_test, id3_y_test_pred))
+
+        result = {
+            "params": params,
+            "mean_cv_train_acc": np.mean(cv_train_acc_scores),
+            "std_dev_train_acc": np.std(cv_train_acc_scores),
+            "mean_cv_test_acc": np.mean(cv_test_acc_scores),
+            "std_dev_test_acc": np.std(cv_test_acc_scores),
+            "mean_cv_test_prec": np.mean(cv_test_prec_scores),
+            "std_dev_test_prec": np.std(cv_test_prec_scores),
+            "mean_cv_test_rec": np.mean(cv_test_rec_scores),
+            "std_dev_test_rec": np.std(cv_test_rec_scores),
+            "mean_cv_test_f1": np.mean(cv_test_f1_scores),
+            "std_dev_test_f1": np.std(cv_test_f1_scores),
+            "id3_mean_cv_train_acc": np.mean(cv_id3_train_acc_scores),
+            "id3_std_dev_train_acc": np.std(cv_id3_train_acc_scores),
+            "id3_mean_cv_test_acc": np.mean(cv_id3_test_acc_scores),
+            "id3_std_dev_test_acc": np.std(cv_id3_test_acc_scores),
+            "id3_mean_cv_test_prec": np.mean(cv_id3_test_prec_scores),
+            "id3_std_dev_test_prec": np.std(cv_id3_test_prec_scores),
+            "id3_mean_cv_test_rec": np.mean(cv_id3_test_rec_scores),
+            "id3_std_dev_test_rec": np.std(cv_id3_test_rec_scores),
+            "id3_mean_cv_test_f1": np.mean(cv_id3_test_f1_scores),
+            "id3_std_dev_test_f1": np.std(cv_id3_test_f1_scores),
+        }
+        results.append(result)
 
     with open(f"../results/{dataset}.json", "a") as file_handle:
         json.dump(results, file_handle, indent=4)
