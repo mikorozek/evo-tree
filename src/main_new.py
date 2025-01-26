@@ -41,14 +41,14 @@ datasets = {
 
 param_dist = {
     "max_depth": [4],
-    "population_size": [10],
-    "elites_amount": [10],
-    "p_split": [0.7],
-    "crossover_rate": [0.4],
-    "mutation_rate": [0.1],
-    "alpha1": [0.95],
-    "alpha2": [0.01],
-    "num_gen": [50],
+    # "population_size": [10],
+    # "elites_amount": [10],
+    # "p_split": [0.7],
+    # "crossover_rate": [0.4],
+    # "mutation_rate": [0.1],
+    # "alpha1": [0.95],
+    # "alpha2": [0.01],
+    # "num_gen": [50],
 }
 
 
@@ -61,7 +61,7 @@ init_params = {
     "mutation_rate": 0.3468609511181633,
     "alpha1": 0.9653208422298942,
     "alpha2": 0.012685866059831859,
-    "num_gen": 20,
+    "num_gen": 10,
 }
 
 
