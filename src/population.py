@@ -26,8 +26,6 @@ class Population:
         queue = [(0, 0, np.arange(len(X)))]
         
         while queue:
-            print(f'attr: {attributes_arr}')
-            print(f'trhesh: {thresholds_arr}')
             idx, depth, data_indices = queue.pop(0)
             if len(data_indices) == 0 or idx >= size:
                 continue
@@ -59,8 +57,6 @@ class Population:
                 queue.append((2*idx + 1, depth + 1, left_indices))
                 queue.append((2*idx + 2, depth + 1, right_indices))
     
-        print(f'attr:{attributes_arr}')
-        print(f'thresh:{thresholds_arr}')
         return DecisionTree(attributes_arr, thresholds_arr, max_depth)
 
     def evaluate_population(self, alpha1: float = 0.99, alpha2: float = 0.01):
@@ -93,6 +89,8 @@ class Population:
 
     @staticmethod
     def crossover(parent1: DecisionTree, parent2: DecisionTree) -> tuple[DecisionTree, DecisionTree]:
+        parent1.print_tree()
+        parent2.print_tree()
         def get_nodes(parent: DecisionTree) -> list[int]:
             return list(range(len(parent.attributes)))
         
