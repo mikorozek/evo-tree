@@ -26,7 +26,6 @@ class Population:
             for _ in range(population_size)
         ]
         self.generation = 0
-        print(self.X.shape)
 
     @staticmethod
     def _create_random_tree(

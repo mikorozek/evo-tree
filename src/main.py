@@ -1,21 +1,32 @@
 import pandas as pd
 import numpy as np
+import random
 from typing import List, Dict
 from population import Population
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
-parameters = {
-    "max_depth": 9,
-    "population_size": 1000,
-    "elites_amount": 10,
-    "p_split": 0.6939588167822919,
-    "crossover_rate": 0.4158614032572565,
-    "mutation_rate": 0.3468609511181633,
-    "alpha1": 0.9653208422298942,
-    "alpha2": 0.012685866059831859,
-    "num_gen": 1000,
+param_ranges = {
+    "max_depth": ("int", 2, 5),
+    "population_size": ("int", 50, 100),
+    "elites_amount": ("int", 1, 10),
+    "p_split": ("float", 0.5, 0.8),
+    "crossover_rate": ("float", 0.4, 0.8),
+    "mutation_rate": ("float", 0.05, 0.5),
+    "alpha1": ("float", 0.95, 1.0),
+    "alpha2": ("float", 0.01, 0.2),
+    "num_gen": ("int", 20, 50),
 }
+
+
+def random_search_params(param_ranges):
+    params = {}
+    for param_name, (param_type, min_val, max_val) in param_ranges.items():
+        if param_type == "int":
+            params[param_name] = random.randint(min_val, max_val)
+        elif param_type == "float":
+            params[param_name] = random.uniform(min_val, max_val)
+    return params
 
 
 def calculate_possible_thresholds(X: np.ndarray) -> Dict[int, List[float]]:
@@ -47,6 +58,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 possible_thresholds = calculate_possible_thresholds(np.array(X_train))
+parameters = random_search_params(param_ranges)
 
 pop = Population(
     X=np.array(X_train),
