@@ -2,18 +2,19 @@ import pandas as pd
 import numpy as np
 from typing import List, Dict
 from population import Population
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.model_selection import train_test_split 
 from sklearn.preprocessing import LabelEncoder
 
 parameters = {
         "max_depth": 5,
-        "population_size": 10,
-        "elites_amount": 5,
-        "p_split": 0.7,
+        "population_size": 50,
+        "elites_amount": 3,
+        "p_split": 0.8,
         "crossover_rate": 0.5,
         "mutation_rate": 0.2,
         "alpha1": 0.99,
-        "alpha2": 0.01
+        "alpha2": 0.01,
+        "num_gen": 150
         }
 
 def calculate_possible_thresholds(X: np.ndarray) -> Dict[int, List[float]]:
@@ -36,7 +37,7 @@ X = df.drop(0, axis=1).values
 y = df[0].values
 
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
 
 possible_thresholds = calculate_possible_thresholds(np.array(X_train))
 
@@ -51,7 +52,7 @@ pop = Population(
 )
 
 
-for gen in range(100):
+for gen in range(parameters["num_gen"]):
     best = pop.get_best()
     print(f"Generation {gen+1}, Best Fitness: {best.fitness:.4f}")
     pop.create_new_generation(
@@ -65,10 +66,5 @@ for gen in range(100):
 
 
 final_best = pop.get_best()
-print("\nNajlepsze drzewo:")
+print("\nBest tree:")
 print(final_best)
-
-
-scores = cross_val_score(final_best, X, y, cv=5, scoring='accuracy')
-print(f"Cross-validation accuracy scores: {scores}")
-print(f"Mean accuracy: {scores.mean():.4f}")

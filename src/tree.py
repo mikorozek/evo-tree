@@ -3,10 +3,9 @@ import numpy as np
 from sklearn.metrics import accuracy_score
 
 class DecisionTree:
-    def __init__(self, attributes: List[int], thresholds: List[float], max_depth: int):
+    def __init__(self, attributes: List[int], thresholds: List[float]):
         self.attributes = attributes
         self.thresholds = thresholds
-        self.max_depth = max_depth
         self.fitness = float('inf')
     
     def __repr__(self):

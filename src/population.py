@@ -20,15 +20,12 @@ class Population:
     def _create_random_tree(X: np.ndarray, y: np.ndarray, attributes: List[int], 
                             possible_thresholds: Dict[int, List[float]], max_depth: int, 
                             p_split: float) -> DecisionTree:
-        size = 2**(max_depth + 1) - 1
         attributes_arr = []
         thresholds_arr = []
         queue = [(0, 0, np.arange(len(X)))]
         
         while queue:
             idx, depth, data_indices = queue.pop(0)
-            if len(data_indices) == 0 or idx >= size:
-                continue
 
             if idx >= len(attributes_arr):
                 elements_to_add = idx - len(attributes_arr) + 1
@@ -57,7 +54,7 @@ class Population:
                 queue.append((2*idx + 1, depth + 1, left_indices))
                 queue.append((2*idx + 2, depth + 1, right_indices))
     
-        return DecisionTree(attributes_arr, thresholds_arr, max_depth)
+        return DecisionTree(attributes_arr, thresholds_arr)
 
     def evaluate_population(self, alpha1: float, alpha2: float):
         for tree in self.individuals:
@@ -90,7 +87,7 @@ class Population:
     @staticmethod
     def crossover(parent1: DecisionTree, parent2: DecisionTree) -> tuple[DecisionTree, DecisionTree]:
         def get_nodes(parent: DecisionTree) -> list[int]:
-            return list(range(len(parent.attributes)))
+            return [i for i, threshold in enumerate(parent.thresholds) if threshold is not None]
         
         p1_nodes, p2_nodes = get_nodes(parent1), get_nodes(parent2)
         
@@ -101,18 +98,17 @@ class Population:
         p2_idx = random.choice(p2_nodes)
         
         def copy_subtree(src_idx: int, dest_idx: int, src_tree: DecisionTree, dest_attrs: list, dest_thresholds: list) -> None:
-            if src_idx >= len(src_tree.attributes):
-                return
             if dest_idx >= len(dest_attrs):
                 dest_attrs.extend([None] * (dest_idx - len(dest_attrs) + 1))
                 dest_thresholds.extend([None] * (dest_idx - len(dest_thresholds) + 1))
             
             dest_attrs[dest_idx] = src_tree.attributes[src_idx]
             dest_thresholds[dest_idx] = src_tree.thresholds[src_idx]
+
             
             if src_tree.attributes[src_idx] is not None:
-                copy_subtree(2*src_idx + 1, 2*dest_idx + 1, src_tree, dest_attrs, dest_thresholds)
-                copy_subtree(2*src_idx + 2, 2*dest_idx + 2, src_tree, dest_attrs, dest_thresholds)
+                copy_subtree(2 * src_idx + 1, 2 * dest_idx + 1, src_tree, dest_attrs, dest_thresholds)
+                copy_subtree(2 * src_idx + 2, 2 * dest_idx + 2, src_tree, dest_attrs, dest_thresholds)
         
         def create_child(base_parent: DecisionTree, donor_parent: DecisionTree, base_idx: int, donor_idx: int) -> tuple[list, list]:
             new_attrs = base_parent.attributes.copy()
@@ -124,21 +120,23 @@ class Population:
         child2_attrs, child2_thresholds = create_child(parent2, parent1, p2_idx, p1_idx)
         
         return (
-            DecisionTree(child1_attrs, child1_thresholds, parent1.max_depth),
-            DecisionTree(child2_attrs, child2_thresholds, parent2.max_depth)
+            DecisionTree(child1_attrs, child1_thresholds),
+            DecisionTree(child2_attrs, child2_thresholds)
         )
 
     def mutate(self, tree: DecisionTree, 
                attributes: List[int], possible_thresholds: Dict[int, List[float]], 
                mutation_rate: float) -> None:
         for index, attribute in enumerate(tree.attributes):
-            if random.random() < mutation_rate:
-                if attribute is None:
-                    label = self.get_majority_label_for_leaf(tree, index)
-                    tree.thresholds[index] = label
-                else:
-                    tree.attributes[index] = random.choice(attributes)
-                    tree.thresholds[index] = random.choice(possible_thresholds[attribute])
+            if (tree.thresholds[index] is not None):
+                if random.random() < mutation_rate:
+                    if attribute is None:
+                        label = self.get_majority_label_for_leaf(tree, index)
+                        tree.thresholds[index] = label
+                    else:
+                        tree.attributes[index] = random.choice(attributes)
+                        label = random.choice(possible_thresholds[attribute])
+                        tree.thresholds[index] = label
 
     def get_majority_label_for_leaf(self, tree: DecisionTree, leaf_index: int) -> int:
         matching_indices = []
@@ -194,7 +192,8 @@ class Population:
                 self.mutate(child, attributes, possible_thresholds, mutation_rate)
         
         self.individuals = elites + children[:len(self.individuals)-elites_amount]
-        self.individuals[0].print_tree()
+        for tree in self.individuals:
+            tree.print_tree()
         self.generation += 1
 
     def get_best(self) -> DecisionTree:
