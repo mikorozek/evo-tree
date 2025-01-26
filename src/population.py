@@ -57,6 +57,7 @@ class Population:
         return DecisionTree(attributes_arr, thresholds_arr)
 
     def evaluate_population(self, alpha1: float, alpha2: float):
+        fitness_scores = []
         for tree in self.individuals:
             correct = 0
             for xi, yi in zip(self.X, self.y):
@@ -75,6 +76,9 @@ class Population:
             accuracy = correct / len(self.y)
             current_depth = tree.calculate_depth()
             tree.fitness = alpha1 * (1 - accuracy) + alpha2 * current_depth
+            fitness_scores.append(tree.fitness)
+        return min(fitness_scores)
+
 
     def tournament_selection(self, tournament_size: int = 2) -> List[DecisionTree]:
         selected = []
