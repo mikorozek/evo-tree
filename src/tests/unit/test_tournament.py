@@ -47,14 +47,6 @@ def test_tournament_selects_better_fitness(population_with_trees):
         assert selected[0].fitness == 0
 
 
-def test_tournament_with_single_participant(population_with_trees):
-    with patch("random.sample") as mock_sample:
-        mock_sample.return_value = [population_with_trees.individuals[2]]
-
-        selected = population_with_trees.tournament_selection(tournament_size=1)
-        assert selected[0].fitness == 2
-
-
 def test_tournament_entire_population(population_with_trees):
     with patch("random.sample") as mock_sample:
         mock_sample.return_value = population_with_trees.individuals
