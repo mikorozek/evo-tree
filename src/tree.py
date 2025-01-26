@@ -54,7 +54,7 @@ class DecisionTree:
 
     def calculate_depth(self) -> int:
         max_depth = 0
-        for idx, attribute in enumerate(self.attributes):
+        for idx, attribute in enumerate(self.thresholds):
             if attribute is not None:
                 depth = int(np.floor(np.log2(idx + 1)))
                 max_depth = max(max_depth, depth)
