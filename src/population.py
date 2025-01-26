@@ -83,7 +83,7 @@ class Population:
             current_depth = tree.calculate_depth()
             tree.fitness = alpha1 * (1 - accuracy) + alpha2 * current_depth
 
-    def tournament_selection(self, tournament_size: int = 3) -> List[DecisionTree]:
+    def tournament_selection(self, tournament_size: int = 2) -> List[DecisionTree]:
         selected = []
         for _ in range(len(self.individuals)):
             contestants = random.sample(self.individuals, tournament_size)
@@ -134,32 +134,34 @@ class Population:
         for index, attribute in enumerate(tree.attributes):
             if random.random() < mutation_rate:
                 if attribute is None:
-                    data_in_leaf = self.get_majority_class_for_leaf(tree, index)
-                    y_subset = self.y[data_in_leaf]
-                    majority_class = np.argmax(np.bincount(y_subset)) if len(y_subset) > 0 else 0
-                    tree.thresholds[i] = majority_class
+                    label = self.get_majority_label_for_leaf(tree, index)
+                    tree.thresholds[index] = label
                 else:
-                    tree.attributes[i] = random.choice(attributes)
-                    tree.thresholds[i] = random.choice(possible_thresholds[tree.attributes[i]])
+                    tree.attributes[index] = random.choice(attributes)
+                    tree.thresholds[index] = random.choice(possible_thresholds[attribute])
 
-    def _get_data_for_leaf(self, tree: DecisionTree, leaf_idx: int) -> List[int]:
-        data_indices = []
-        for i in range(len(self.X)):
-            xi = self.X[i].flatten()
-            current_idx = 0
+    def get_majority_label_for_leaf(self, tree: DecisionTree, leaf_index: int) -> int:
+        matching_indices = []
+        for index, xi in enumerate(self.X):
+            current_index = 0
             while True:
-                if current_idx == leaf_idx:
-                    data_indices.append(i)
+                if current_index == leaf_index:
+                    matching_indices.append(index)
                     break
-                attr = tree.attributes[current_idx]
-                threshold = tree.thresholds[current_idx]
+                attr = tree.attributes[current_index]
+                threshold = tree.thresholds[current_index]
                 if attr is None:
                     break
                 if xi[attr] <= threshold:
-                    current_idx = 2 * current_idx + 1
+                    current_index = 2 * current_index + 1
                 else:
-                    current_idx = 2 * current_idx + 2
-        return data_indices
+                    current_index = 2 * current_index + 2
+
+        if not matching_indices:
+            return int(np.argmax(np.bincount(self.y)))
+
+        return int(np.argmax(np.bincount(self.y[matching_indices])))
+        
 
     def create_new_generation(self, attributes: List[int], possible_thresholds: Dict[int, List[float]], 
                               crossover_rate: float = 0.7, mutation_rate: float = 0.2, 
@@ -169,16 +171,19 @@ class Population:
         selected = self.tournament_selection()
         
         children = []
-        for i in range(0, len(selected)-1, 2):
+        for i in range(0, len(selected), 2):
+            if i == len(selected) - 1:
+                continue
+
             parent1 = selected[i]
-            parent2 = selected[i+1]
+            parent2 = selected[i + 1]
+            
             if random.random() < crossover_rate:
-                child1 = self.crossover(parent1, parent2)
-                child2 = self.crossover(parent2, parent1)
+                child1, child2 = self.crossover(parent1, parent2)
                 children.extend([child1, child2])
             else:
                 children.extend([parent1, parent2])
-        
+
         for child in children:
             if random.random() < mutation_rate:
                 self.mutate(child, attributes, possible_thresholds)

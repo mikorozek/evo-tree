@@ -1,4 +1,3 @@
-from ast import _Attributes
 from typing import List
 import numpy as np
 from sklearn.metrics import accuracy_score

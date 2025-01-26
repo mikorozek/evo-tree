@@ -34,10 +34,10 @@ possible_thresholds = calculate_possible_thresholds(np.array(X_train))
 pop = Population(
     X=np.array(X_train),
     y=np.array(y_train),
-    population_size=5,
+    population_size=30,
     attributes=list(range(16)),
     possible_thresholds=possible_thresholds,
-    max_depth=3
+    max_depth=7
 )
 
 
@@ -47,7 +47,7 @@ for gen in range(100):
     pop.create_new_generation(
         attributes=list(range(16)),
         possible_thresholds=possible_thresholds,
-        elitism=2
+        elitism=5
     )
     pop.evaluate_population()
 
