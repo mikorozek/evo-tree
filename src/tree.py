@@ -1,3 +1,4 @@
+from ast import _Attributes
 from typing import List
 import numpy as np
 from sklearn.metrics import accuracy_score
@@ -35,6 +36,7 @@ class DecisionTree:
                 depth = int(np.floor(np.log2(idx + 1)))
                 max_depth = max(max_depth, depth)
         return max_depth
+
 
     def score(self, X: np.ndarray, y: np.ndarray) -> float:
         y_pred = self.predict(X)

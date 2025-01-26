@@ -104,10 +104,10 @@ class Population:
     def mutate(self, tree: DecisionTree, 
                attributes: List[int], possible_thresholds: Dict[int, List[float]], 
                mutation_rate: float = 0.1) -> None:
-        for i in range(len(tree.attributes)):
+        for index, attribute in enumerate(tree.attributes):
             if random.random() < mutation_rate:
-                if tree.attributes[i] is None:
-                    data_in_leaf = self._get_data_for_leaf(tree, i)
+                if attribute is None:
+                    data_in_leaf = self.get_majority_class_for_leaf(tree, index)
                     y_subset = self.y[data_in_leaf]
                     majority_class = np.argmax(np.bincount(y_subset)) if len(y_subset) > 0 else 0
                     tree.thresholds[i] = majority_class
