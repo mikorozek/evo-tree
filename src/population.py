@@ -6,11 +6,11 @@ from tree import DecisionTree
 class Population:
     def __init__(self, X: np.ndarray, y: np.ndarray, population_size: int, 
                  attributes: List[int], possible_thresholds: Dict[int, List[float]], 
-                 max_depth: int):
+                 max_depth: int, p_split: float):
         self.X = X
         self.y = y
         self.individuals = [
-            self._create_random_tree(X, y, attributes, possible_thresholds, max_depth)
+            self._create_random_tree(X, y, attributes, possible_thresholds, max_depth, p_split)
             for _ in range(population_size)
         ]
         self.generation = 0
@@ -19,7 +19,7 @@ class Population:
     @staticmethod
     def _create_random_tree(X: np.ndarray, y: np.ndarray, attributes: List[int], 
                             possible_thresholds: Dict[int, List[float]], max_depth: int, 
-                            p_split: float = 0.7) -> DecisionTree:
+                            p_split: float) -> DecisionTree:
         size = 2**(max_depth + 1) - 1
         attributes_arr = []
         thresholds_arr = []
@@ -59,7 +59,7 @@ class Population:
     
         return DecisionTree(attributes_arr, thresholds_arr, max_depth)
 
-    def evaluate_population(self, alpha1: float = 0.99, alpha2: float = 0.01):
+    def evaluate_population(self, alpha1: float, alpha2: float):
         for tree in self.individuals:
             correct = 0
             for xi, yi in zip(self.X, self.y):
@@ -89,8 +89,6 @@ class Population:
 
     @staticmethod
     def crossover(parent1: DecisionTree, parent2: DecisionTree) -> tuple[DecisionTree, DecisionTree]:
-        parent1.print_tree()
-        parent2.print_tree()
         def get_nodes(parent: DecisionTree) -> list[int]:
             return list(range(len(parent.attributes)))
         
@@ -132,7 +130,7 @@ class Population:
 
     def mutate(self, tree: DecisionTree, 
                attributes: List[int], possible_thresholds: Dict[int, List[float]], 
-               mutation_rate: float = 0.1) -> None:
+               mutation_rate: float) -> None:
         for index, attribute in enumerate(tree.attributes):
             if random.random() < mutation_rate:
                 if attribute is None:
@@ -144,11 +142,13 @@ class Population:
 
     def get_majority_label_for_leaf(self, tree: DecisionTree, leaf_index: int) -> int:
         matching_indices = []
-        for index, xi in enumerate(self.X):
+        for i, xi in enumerate(self.X):
             current_index = 0
             while True:
+                if current_index >= len(tree.attributes):
+                    break
                 if current_index == leaf_index:
-                    matching_indices.append(index)
+                    matching_indices.append(i)
                     break
                 attr = tree.attributes[current_index]
                 threshold = tree.thresholds[current_index]
@@ -160,15 +160,18 @@ class Population:
                     current_index = 2 * current_index + 2
 
         if not matching_indices:
-            return int(np.argmax(np.bincount(self.y)))
+            majority_label = int(np.argmax(np.bincount(self.y)))
+            return majority_label
 
-        return int(np.argmax(np.bincount(self.y[matching_indices])))
+        subset_y = self.y[matching_indices]
+        majority_label = int(np.argmax(np.bincount(subset_y)))
+        return majority_label
         
 
     def create_new_generation(self, attributes: List[int], possible_thresholds: Dict[int, List[float]], 
-                              crossover_rate: float = 0.7, mutation_rate: float = 0.2, 
-                              elitism: int = 1) -> None:
-        elites = sorted(self.individuals, key=lambda x: x.fitness)[:elitism]
+                              crossover_rate: float, mutation_rate: float, 
+                              elites_amount: int) -> None:
+        elites = sorted(self.individuals, key=lambda x: x.fitness)[:elites_amount]
         
         selected = self.tournament_selection()
         
@@ -188,9 +191,10 @@ class Population:
 
         for child in children:
             if random.random() < mutation_rate:
-                self.mutate(child, attributes, possible_thresholds)
+                self.mutate(child, attributes, possible_thresholds, mutation_rate)
         
-        self.individuals = elites + children[:len(self.individuals)-elitism]
+        self.individuals = elites + children[:len(self.individuals)-elites_amount]
+        self.individuals[0].print_tree()
         self.generation += 1
 
     def get_best(self) -> DecisionTree:

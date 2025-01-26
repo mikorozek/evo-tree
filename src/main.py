@@ -5,9 +5,18 @@ from population import Population
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.preprocessing import LabelEncoder
 
+parameters = {
+        "max_depth": 5,
+        "population_size": 10,
+        "elites_amount": 5,
+        "p_split": 0.7,
+        "crossover_rate": 0.5,
+        "mutation_rate": 0.2,
+        "alpha1": 0.99,
+        "alpha2": 0.01
+        }
 
 def calculate_possible_thresholds(X: np.ndarray) -> Dict[int, List[float]]:
-    """Oblicza możliwe progi dla każdego atrybutu."""
     possible_thresholds = {}
     for attr in range(X.shape[1]):
         unique_values = np.unique(X[:, attr])
@@ -34,10 +43,11 @@ possible_thresholds = calculate_possible_thresholds(np.array(X_train))
 pop = Population(
     X=np.array(X_train),
     y=np.array(y_train),
-    population_size=30,
+    population_size=parameters["population_size"],
     attributes=list(range(16)),
     possible_thresholds=possible_thresholds,
-    max_depth=7
+    max_depth=parameters["max_depth"],
+    p_split=parameters["p_split"]
 )
 
 
@@ -47,9 +57,11 @@ for gen in range(100):
     pop.create_new_generation(
         attributes=list(range(16)),
         possible_thresholds=possible_thresholds,
-        elitism=5
+        elites_amount=parameters["elites_amount"],
+        crossover_rate=parameters["crossover_rate"],
+        mutation_rate=parameters["mutation_rate"]
     )
-    pop.evaluate_population()
+    pop.evaluate_population(parameters["alpha1"], parameters["alpha2"])
 
 
 final_best = pop.get_best()
