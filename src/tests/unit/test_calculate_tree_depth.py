@@ -1,3 +1,6 @@
+from test_common import (balanced_tree, single_node_tree,
+                         two_decision_node_tree, very_unbalanced_tree)
+
 from tree import DecisionTree
 
 

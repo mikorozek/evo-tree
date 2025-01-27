@@ -1,23 +1,24 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-import json
 import argparse
+import json
 from typing import Dict, List
-from sklearn.model_selection import KFold
-from sklearn.preprocessing import LabelEncoder
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from sklearn.dummy import DummyClassifier
 from sklearn.metrics import (
     accuracy_score,
+    confusion_matrix,
+    f1_score,
     precision_score,
     recall_score,
-    f1_score,
-    confusion_matrix,
 )
+from sklearn.model_selection import KFold
+from sklearn.preprocessing import LabelEncoder
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.dummy import DummyClassifier
-from population import Population
 
+from population import Population
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -40,18 +41,15 @@ datasets = {
 
 
 param_dist = {
-    "max_depth": [4],
-    "population_size": [10],
-    "elites_amount": [10],
-    "p_split": [
-        1.0,
-        1.0,
-    ],
-    "crossover_rate": [0.4],
-    "mutation_rate": [0.1],
-    "alpha1": [0.95],
-    "alpha2": [0.01],
-    "num_gen": [50],
+    "max_depth": [3, 5, 6, 7, 10, 12, 13],
+    "population_size": [100, 200, 500, 1000],
+    "elites_amount": [4, 8, 10, 11, 13, 15, 19],
+    "p_split": [0.5, 0.7, 0.8, 0.85, 0.9, 0.99, 1.0],
+    "crossover_rate": [0.4, 0.6, 0.8, 0.9],
+    "mutation_rate": [0.05, 0.1, 0.2, 0.3, 0.5],
+    "alpha1": [0.5, 0.7, 0.9, 0.95, 0.99],
+    "alpha2": [0.01, 0.02, 0.04, 0.08, 0.16],
+    "num_gen": [50, 100, 200, 400, 800],
 }
 
 
