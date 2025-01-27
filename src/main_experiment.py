@@ -1,24 +1,20 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-import random
-import json
 import argparse
+import json
+import random
 from typing import Dict, List
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from sklearn.dummy import DummyClassifier
+from sklearn.metrics import (accuracy_score, confusion_matrix, f1_score,
+                             precision_score, recall_score)
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import (
-    accuracy_score,
-    precision_score,
-    recall_score,
-    f1_score,
-    confusion_matrix,
-)
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.dummy import DummyClassifier
-from population import Population
 
+from population import Population
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -41,15 +37,7 @@ datasets = {
 
 
 param_dist = {
-    "max_depth": [4],
-    "population_size": [10],
-    "elites_amount": [10],
-    "p_split": [0.7],
-    "crossover_rate": [0.4],
-    "mutation_rate": [0.1],
-    "alpha1": [0.95],
-    "alpha2": [0.01],
-    "num_gen": [50],
+    "population_size": [100, 200, 500, 1000],
 }
 
 
