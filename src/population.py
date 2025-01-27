@@ -103,9 +103,8 @@ class Population:
             selected.append(winner)
         return selected
 
-    @staticmethod
     def crossover(
-        parent1: DecisionTree, parent2: DecisionTree
+        self, parent1: DecisionTree, parent2: DecisionTree
     ) -> tuple[DecisionTree, DecisionTree]:
         def get_nodes(parent: DecisionTree) -> list[int]:
             return [
@@ -150,6 +149,10 @@ class Population:
                     src_tree,
                     dest_attrs,
                     dest_thresholds,
+                )
+            else:
+                dest_thresholds[dest_idx] = self.get_majority_label_for_leaf_(
+                    DecisionTree(dest_attrs, dest_thresholds), dest_idx
                 )
 
         def create_child(

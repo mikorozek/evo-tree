@@ -171,5 +171,4 @@ cython_debug/
 .pypirc
 data/
 hyperparameter_results.csv
-results/
 cf_matrix/

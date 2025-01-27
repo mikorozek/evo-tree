@@ -41,27 +41,30 @@ datasets = {
 
 param_dist = {
     "max_depth": [4],
-    # "population_size": [10],
-    # "elites_amount": [10],
-    # "p_split": [0.7],
-    # "crossover_rate": [0.4],
-    # "mutation_rate": [0.1],
-    # "alpha1": [0.95],
-    # "alpha2": [0.01],
-    # "num_gen": [50],
+    "population_size": [10],
+    "elites_amount": [10],
+    "p_split": [
+        1.0,
+        1.0,
+    ],
+    "crossover_rate": [0.4],
+    "mutation_rate": [0.1],
+    "alpha1": [0.95],
+    "alpha2": [0.01],
+    "num_gen": [50],
 }
 
 
 init_params = {
     "max_depth": 9,
-    "population_size": 10,
+    "population_size": 50,
     "elites_amount": 10,
-    "p_split": 0.6939588167822919,
+    "p_split": 1.0,
     "crossover_rate": 0.4158614032572565,
     "mutation_rate": 0.3468609511181633,
     "alpha1": 0.9653208422298942,
     "alpha2": 0.012685866059831859,
-    "num_gen": 10,
+    "num_gen": 100,
 }
 
 
@@ -177,7 +180,6 @@ for dataset, dataset_path in datasets.items():
                     min_fitness_score_this_generation = pop.evaluate_population(
                         params["alpha1"], params["alpha2"]
                     )
-                    # print(min_fitness_score_this_generation)
                     generations_with_no_progress_count += 1
                     if (
                         min_fitness_score_this_generation
